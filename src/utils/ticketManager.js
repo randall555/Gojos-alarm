@@ -21,10 +21,7 @@ async function getOrCreateTicketCategory(guild) {
       name: TICKET_CATEGORY_NAME,
       type: ChannelType.GuildCategory,
       permissionOverwrites: [
-        {
-          id: guild.roles.everyone,
-          deny: [PermissionFlagsBits.ViewChannel],
-        },
+        { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
       ],
     });
   }
@@ -32,7 +29,7 @@ async function getOrCreateTicketCategory(guild) {
   return category;
 }
 
-async function createTicket(guild, member) {
+async function createTicket(guild, member, divisionName = null, divisionReq = null) {
   const existing = activeTickets.get(member.id);
   if (existing) {
     const ch = guild.channels.cache.get(existing);
@@ -45,12 +42,9 @@ async function createTicket(guild, member) {
     name: `ticket-${member.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
     type: ChannelType.GuildText,
     parent: category.id,
-    topic: `Ticket for ${member.user.tag} | User ID: ${member.id}`,
+    topic: `Ticket for ${member.user.tag} | User ID: ${member.id}${divisionName ? ` | Applying for: ${divisionName}` : ''}`,
     permissionOverwrites: [
-      {
-        id: guild.roles.everyone,
-        deny: [PermissionFlagsBits.ViewChannel],
-      },
+      { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
       {
         id: member.id,
         allow: [
@@ -77,16 +71,20 @@ async function createTicket(guild, member) {
 
   activeTickets.set(member.id, ticketChannel.id);
 
+  const divLine = divisionName
+    ? `You are applying for **${divisionName}** (Bounty requirement: **${divisionReq}**)\n\n`
+    : '';
+
   const embed = new EmbedBuilder()
-    .setTitle(`Welcome to your ticket, ${member.user.username}!`)
+    .setTitle(`Welcome, ${member.user.username}!`)
     .setDescription(
       `Hello ${member}! 👋\n\n` +
-      `Welcome to **${CREW_NAME}** crew application!\n\n` +
-      `**To join the crew, please:**\n` +
-      `1. Send a **screenshot** of your in-game bounty\n` +
-      `2. Do NOT just type your username or bounty number — you MUST provide a screenshot as proof\n\n` +
-      `> ⚠️ If you send just your username or bounty without a screenshot, your message will be deleted.\n\n` +
-      `Once your bounty is verified, you will be assigned your Division role automatically.`
+      divLine +
+      `**Please provide the following:**\n` +
+      `• A **screenshot** of your Roblox username alongside your bounty\n` +
+      `• What **region** you are in and what **platform** you play on\n\n` +
+      `> ⚠️ Do NOT just type your username or bounty number — you MUST send a screenshot as proof.\n` +
+      `> If you break the rules, your ticket will be deleted in 1 hour.`
     )
     .setColor(CREW_COLOR)
     .setFooter({ text: `${CREW_NAME} | Crew Application` })
@@ -115,7 +113,6 @@ async function closeTicket(channel, closedBy) {
     .setTimestamp();
 
   await channel.send({ embeds: [embed] });
-
   await new Promise(r => setTimeout(r, 5000));
   await channel.delete('Ticket closed').catch(() => {});
 }
