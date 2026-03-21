@@ -1,27 +1,23 @@
 module.exports = {
   CREW_NAME: process.env.CREW_NAME || 'The Crew',
-  CREW_COLOR: 0xFF4500,
+  CREW_COLOR: 0xFF0000,
   TICKET_CATEGORY_NAME: 'TICKETS',
   JOIN_CREW_CHANNEL: 'join-crew',
   LOG_CHANNEL: 'ticket-logs',
 
   BOUNTY_ROLES: [
-    { name: 'Division 1', min: 3_000_000_000, color: 0xFFD700 },
-    { name: 'Division 2', min: 1_000_000_000, color: 0xC0C0C0 },
-    { name: 'Division 3', min: 500_000_000,   color: 0xCD7F32 },
-    { name: 'Division 4', min: 100_000_000,   color: 0x4169E1 },
-    { name: 'Division 5', min: 0,             color: 0x228B22 },
+    { name: '1st Division', min: 30_000_000,  color: 0xFFD700 },
+    { name: '2nd Division', min: 20_000_000,  color: 0xC0C0C0 },
+    { name: '3rd Division', min: 10_000_000,  color: 0xCD7F32 },
+    { name: '4th Division', min: 5_000_000,   color: 0x4169E1 },
+    { name: '5th Division', min: 0,            color: 0x228B22 },
   ],
 
-  USERNAME_REGEX: /^[a-zA-Z0-9_]{3,32}$/,
-
-  BOUNTY_NUMBER_REGEX: /^\d[\d,\.]*\s*(B|M|K|billion|million|thousand)?\s*$/i,
-
   BOUNTY_THRESHOLDS: {
-    'Division 1': 3_000_000_000,
-    'Division 2': 1_000_000_000,
-    'Division 3': 500_000_000,
-    'Division 4': 100_000_000,
-    'Division 5': 0,
+    '1st Division': 30_000_000,
+    '2nd Division': 20_000_000,
+    '3rd Division': 10_000_000,
+    '4th Division': 5_000_000,
+    '5th Division': 0,
   },
 };
