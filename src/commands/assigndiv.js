@@ -16,11 +16,11 @@ module.exports = {
         .setDescription('Which division to assign')
         .setRequired(true)
         .addChoices(
-          { name: 'Division 1 (3B+)', value: 'Division 1' },
-          { name: 'Division 2 (1B+)', value: 'Division 2' },
-          { name: 'Division 3 (500M+)', value: 'Division 3' },
-          { name: 'Division 4 (100M+)', value: 'Division 4' },
-          { name: 'Division 5 (<100M)', value: 'Division 5' },
+          { name: '1st Division (30M+)', value: '1st Division' },
+          { name: '2nd Division (20-29M)', value: '2nd Division' },
+          { name: '3rd Division (10-20M)', value: '3rd Division' },
+          { name: '4th Division (5-10M)', value: '4th Division' },
+          { name: '5th Division (0-5M)', value: '5th Division' },
         )
     ),
 
@@ -47,9 +47,10 @@ module.exports = {
     }
 
     try {
-      const allDivRoles = BOUNTY_ROLES.map(r => guild.roles.cache.find(gr => gr.name === r.name)).filter(Boolean);
+      const allDivRoles = BOUNTY_ROLES
+        .map(r => guild.roles.cache.find(gr => gr.name === r.name))
+        .filter(Boolean);
       await member.roles.remove(allDivRoles);
-
       await member.roles.add(role);
       await interaction.editReply({ content: `✅ Assigned **${divName}** to ${member}.` });
     } catch (err) {
