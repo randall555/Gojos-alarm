@@ -131,8 +131,9 @@ async function handleRemovedUser(guild, member) {
   const embed = new EmbedBuilder()
     .setTitle('Sorry, you have been removed.')
     .setDescription(
-      `${member.user.username}, you have been removed from the ticket system due to repeated rule violations.\n\n` +
-      `You are no longer able to open tickets. Please contact a staff member if you believe this was a mistake.`
+      `${member.user.username}, you were removed from the ticket system for breaking the rules.\n\n` +
+      `You must wait **5 minutes** before you can open a new ticket.\n\n` +
+      `When you return, please send a **screenshot** as proof — do not just type your username or bounty.`
     )
     .setColor(0x9B59B6)
     .setTimestamp();
