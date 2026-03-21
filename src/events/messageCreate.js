@@ -1,10 +1,12 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { isLikelyBountyScreenshot, extractBountyFromScreenshot } = require('../utils/screenshotAnalyzer');
 const { getDivisionForBounty, formatBounty } = require('../utils/bountyParser');
 const { CREW_COLOR, BOUNTY_ROLES } = require('../utils/config');
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,32}$/;
 const BOUNTY_NUMBER_PATTERN = /^[\d,\.]+\s*(B(?:illion)?|M(?:illion)?|K(?:thousand)?)?$/i;
+
+const warnCount = new Map();
 
 function isPlainUsernameOrBounty(content) {
   const trimmed = content.trim();
@@ -15,11 +17,10 @@ function isPlainUsernameOrBounty(content) {
   if (words.length > 5) return false;
 
   if (USERNAME_PATTERN.test(trimmed)) return true;
-
   if (BOUNTY_NUMBER_PATTERN.test(trimmed)) return true;
 
   const cleanedNum = trimmed.replace(/[,\.]/g, '').replace(/\s*(B|M|K|billion|million|thousand)\s*/i, '');
-  if (/^\d+$/.test(cleanedNum) && cleanedNum.length >= 7) return true;
+  if (/^\d+$/.test(cleanedNum) && cleanedNum.length >= 6) return true;
 
   return false;
 }
@@ -44,24 +45,46 @@ module.exports = {
     if (!content) return;
 
     if (isPlainUsernameOrBounty(content)) {
-      try {
-        await message.delete();
-      } catch (e) {
-        console.error('Could not delete message:', e.message);
+      try { await message.delete(); } catch (e) {}
+
+      const key = `${channel.id}-${message.author.id}`;
+      const count = (warnCount.get(key) || 0) + 1;
+      warnCount.set(key, count);
+
+      if (count >= 2) {
+        warnCount.delete(key);
+
+        const kickEmbed = new EmbedBuilder()
+          .setTitle('🚫 Removed from Ticket')
+          .setDescription(
+            `${message.author}, you have been removed from this ticket for repeatedly sending your username or bounty without proof.\n\n` +
+            `You must provide a **screenshot** as proof. You may open a new ticket and try again.`
+          )
+          .setColor(0xFF0000)
+          .setTimestamp();
+
+        await channel.send({ content: `${message.author}`, embeds: [kickEmbed] });
+
+        await channel.permissionOverwrites.edit(message.author.id, {
+          ViewChannel: false,
+          SendMessages: false,
+        }).catch(err => console.error('Could not remove user from ticket:', err.message));
+
+        return;
       }
 
       const warningEmbed = new EmbedBuilder()
-        .setTitle('⚠️ Message Deleted')
+        .setTitle(`⚠️ Warning ${count}/2`)
         .setDescription(
-          `${message.author}, your message was removed because it looks like you sent just your username or bounty number without proof.\n\n` +
-          `**If you do not show proof (a screenshot), I will unfortunately have to remove you from this ticket.**\n\n` +
+          `${message.author}, your message was deleted because you sent just your username or bounty number without proof.\n\n` +
+          `**If you do not show proof (a screenshot), I will unfortunately have to kick you out of the ticket.**\n\n` +
+          `You have **${2 - count}** warning(s) left before you are removed.\n\n` +
           `Please send a **screenshot** of your in-game bounty to verify.`
         )
         .setColor(0xFF4500)
         .setTimestamp();
 
       const warning = await channel.send({ content: `${message.author}`, embeds: [warningEmbed] });
-
       setTimeout(() => warning.delete().catch(() => {}), 30_000);
     }
   },
@@ -97,20 +120,17 @@ async function handleScreenshot(message, attachment) {
 
       await processingMsg.edit({ embeds: [embed] });
     } else {
-      const divRow = require('discord.js').ActionRowBuilder
-        ? buildManualDivisionRow()
-        : null;
-
       const embed = new EmbedBuilder()
         .setTitle('📸 Screenshot Received')
         .setDescription(
-          `${member}, your screenshot was received but I couldn't automatically read the bounty amount.\n\n` +
+          `${member}, your screenshot was received!\n\n` +
           `A staff member will verify your bounty and assign your Division role shortly.`
         )
         .setColor(0xFFAA00)
         .setTimestamp();
 
-      await processingMsg.edit({ embeds: [embed], components: divRow ? [divRow] : [] });
+      const row = buildManualDivisionRow();
+      await processingMsg.edit({ embeds: [embed], components: [row] });
     }
   } catch (err) {
     console.error('Screenshot processing error:', err);
@@ -130,17 +150,16 @@ async function handleScreenshot(message, attachment) {
 function buildManualDivisionRow() {
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
   return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('assign_div1').setLabel('Div 1 (3B+)').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('assign_div2').setLabel('Div 2 (1B+)').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('assign_div3').setLabel('Div 3 (500M+)').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('assign_div4').setLabel('Div 4 (100M+)').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('assign_div5').setLabel('Div 5 (<100M)').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('assign_div1').setLabel('1st Div (30M+)').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('assign_div2').setLabel('2nd Div (20M+)').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('assign_div3').setLabel('3rd Div (10M+)').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('assign_div4').setLabel('4th Div (5M+)').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('assign_div5').setLabel('5th Div (0-5M)').setStyle(ButtonStyle.Secondary),
   );
 }
 
 async function assignDivisionRole(member, division, channel) {
   const guild = member.guild;
-
   const divisionRoleConfig = BOUNTY_ROLES.find(r => r.name === division);
 
   let role = guild.roles.cache.find(r => r.name === division);
