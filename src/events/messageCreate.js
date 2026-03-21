@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { isLikelyBountyScreenshot, extractBountyFromScreenshot } = require('../utils/screenshotAnalyzer');
 const { getDivisionForBounty, formatBounty } = require('../utils/bountyParser');
 const { CREW_COLOR, BOUNTY_ROLES } = require('../utils/config');
+const { removedUsers } = require('../utils/ticketManager');
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,32}$/;
 const BOUNTY_NUMBER_PATTERN = /^[\d,\.]+\s*(B(?:illion)?|M(?:illion)?|K(?:thousand)?)?$/i;
@@ -53,14 +54,15 @@ module.exports = {
 
       if (count >= 2) {
         warnCount.delete(key);
+        removedUsers.add(message.author.id);
 
         const kickEmbed = new EmbedBuilder()
           .setTitle('🚫 Removed from Ticket')
           .setDescription(
             `${message.author}, you have been removed from this ticket for repeatedly sending your username or bounty without proof.\n\n` +
-            `You must provide a **screenshot** as proof. You may open a new ticket and try again.`
+            `You are no longer able to open tickets. Contact a staff member if you believe this was a mistake.`
           )
-          .setColor(0xFF0000)
+          .setColor(0x9B59B6)
           .setTimestamp();
 
         await channel.send({ content: `${message.author}`, embeds: [kickEmbed] });
@@ -69,6 +71,9 @@ module.exports = {
           ViewChannel: false,
           SendMessages: false,
         }).catch(err => console.error('Could not remove user from ticket:', err.message));
+
+        await new Promise(r => setTimeout(r, 8000));
+        await channel.delete('User removed after 2 warnings').catch(() => {});
 
         return;
       }
