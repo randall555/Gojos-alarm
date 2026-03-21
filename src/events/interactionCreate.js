@@ -54,7 +54,16 @@ module.exports = {
         const div = DIV_APPLY_MAP[customId];
         await interaction.deferReply({ ephemeral: true });
 
-        const { channel: ticketChannel, isNew } = await createTicket(guild, member, div.name, div.req);
+        const { channel: ticketChannel, isNew, removed } = await createTicket(guild, member, div.name, div.req);
+
+        if (removed) {
+          const embed = new EmbedBuilder()
+            .setTitle('Sorry, you have been removed.')
+            .setDescription('You are no longer able to open tickets. Please contact a staff member if you believe this was a mistake.')
+            .setColor(0x9B59B6);
+          await interaction.editReply({ embeds: [embed] });
+          return;
+        }
 
         const embed = new EmbedBuilder()
           .setDescription(
@@ -77,7 +86,16 @@ module.exports = {
 
       if (customId === 'join_crew') {
         await interaction.deferReply({ ephemeral: true });
-        const { channel: ticketChannel, isNew } = await createTicket(guild, member);
+        const { channel: ticketChannel, isNew, removed } = await createTicket(guild, member);
+
+        if (removed) {
+          const embed = new EmbedBuilder()
+            .setTitle('Sorry, you have been removed.')
+            .setDescription('You are no longer able to open tickets. Please contact a staff member if you believe this was a mistake.')
+            .setColor(0x9B59B6);
+          await interaction.editReply({ embeds: [embed] });
+          return;
+        }
 
         const embed = new EmbedBuilder()
           .setDescription(
