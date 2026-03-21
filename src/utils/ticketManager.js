@@ -9,6 +9,7 @@ const {
 const { CREW_NAME, CREW_COLOR, TICKET_CATEGORY_NAME } = require('./config');
 
 const activeTickets = new Map();
+const removedUsers = new Set();
 
 async function getOrCreateTicketCategory(guild) {
   let category = guild.channels.cache.find(
@@ -30,6 +31,11 @@ async function getOrCreateTicketCategory(guild) {
 }
 
 async function createTicket(guild, member, divisionName = null, divisionReq = null) {
+  if (removedUsers.has(member.id)) {
+    await handleRemovedUser(guild, member);
+    return { channel: null, isNew: false, removed: true };
+  }
+
   const existing = activeTickets.get(member.id);
   if (existing) {
     const ch = guild.channels.cache.get(existing);
@@ -102,6 +108,45 @@ async function createTicket(guild, member, divisionName = null, divisionReq = nu
   return { channel: ticketChannel, isNew: true };
 }
 
+async function handleRemovedUser(guild, member) {
+  const category = await getOrCreateTicketCategory(guild);
+
+  const tempChannel = await guild.channels.create({
+    name: `ticket-${member.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+    type: ChannelType.GuildText,
+    parent: category.id,
+    permissionOverwrites: [
+      { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
+      {
+        id: guild.members.me.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ManageMessages,
+        ],
+      },
+    ],
+  });
+
+  const embed = new EmbedBuilder()
+    .setTitle('Sorry, you have been removed.')
+    .setDescription(
+      `${member.user.username}, you have been removed from the ticket system due to repeated rule violations.\n\n` +
+      `You are no longer able to open tickets. Please contact a staff member if you believe this was a mistake.`
+    )
+    .setColor(0x9B59B6)
+    .setTimestamp();
+
+  await tempChannel.send({ embeds: [embed] });
+
+  try {
+    await member.send({ embeds: [embed] });
+  } catch (e) {}
+
+  await new Promise(r => setTimeout(r, 5000));
+  await tempChannel.delete('Removed user attempted to open ticket').catch(() => {});
+}
+
 async function closeTicket(channel, closedBy) {
   const userId = [...activeTickets.entries()].find(([, id]) => id === channel.id)?.[0];
   if (userId) activeTickets.delete(userId);
@@ -117,4 +162,4 @@ async function closeTicket(channel, closedBy) {
   await channel.delete('Ticket closed').catch(() => {});
 }
 
-module.exports = { createTicket, closeTicket, activeTickets };
+module.exports = { createTicket, closeTicket, activeTickets, removedUsers };
