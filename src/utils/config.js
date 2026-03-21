@@ -1,5 +1,5 @@
 module.exports = {
-  CREW_NAME: process.env.CREW_NAME || 'The Crew',
+  CREW_NAME: process.env.CREW_NAME || 'Nightmare Crew',
   CREW_COLOR: 0xFF0000,
   TICKET_CATEGORY_NAME: 'TICKETS',
   JOIN_CREW_CHANNEL: 'join-crew',
