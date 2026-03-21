@@ -55,12 +55,14 @@ module.exports = {
       if (count >= 2) {
         warnCount.delete(key);
         removedUsers.add(message.author.id);
+        setTimeout(() => removedUsers.delete(message.author.id), 5 * 60 * 1000);
 
         const kickEmbed = new EmbedBuilder()
           .setTitle('🚫 Removed from Ticket')
           .setDescription(
             `${message.author}, you have been removed from this ticket for repeatedly sending your username or bounty without proof.\n\n` +
-            `You are no longer able to open tickets. Contact a staff member if you believe this was a mistake.`
+            `You will not be able to open a new ticket for **5 minutes**.\n\n` +
+            `After 5 minutes, you may try again — but you must send a **screenshot** this time.`
           )
           .setColor(0x9B59B6)
           .setTimestamp();
