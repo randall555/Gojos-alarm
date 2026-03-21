@@ -18,35 +18,53 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     const embed = new EmbedBuilder()
-      .setTitle(`⚓ Join ${CREW_NAME}`)
+      .setTitle(`${CREW_NAME} Crew Recruitment!`)
       .setDescription(
-        `**Welcome, Pirate!**\n\n` +
-        `Are you ready to sail under the flag of **${CREW_NAME}**?\n\n` +
-        `**How to Apply:**\n` +
-        `> 1. Click the **Join the Crew** button below\n` +
-        `> 2. A private ticket will open for you\n` +
-        `> 3. Send a **screenshot** of your in-game bounty\n` +
-        `> 4. You'll be automatically assigned your Division role!\n\n` +
-        `**Division Requirements:**\n` +
-        `🥇 **Division 1** — 3B+ Bounty\n` +
-        `🥈 **Division 2** — 1B+ Bounty\n` +
-        `🥉 **Division 3** — 500M+ Bounty\n` +
-        `🔵 **Division 4** — 100M+ Bounty\n` +
-        `🟢 **Division 5** — Under 100M\n\n` +
-        `*Click the button below to open your application ticket!*`
+        `**Please state the following information when you create your ticket:**\n\n` +
+        `• Screenshot proof of your Roblox username, alongside your bounty.\n` +
+        `• What region you are in and what platform you play on.\n\n` +
+        `If you open a ticket and break one of these rules your ticket will be deleted in 1 hour.\n\n` +
+        `**Bounty Requirements for Each Division:**\n\n` +
+        `• 1st Division: 30M+\n` +
+        `• 2nd Division: 20-29M\n` +
+        `• 3rd Division: 10-20M\n` +
+        `• 4th Division: 5-10M\n` +
+        `• 5th Division: 0-5M`
       )
-      .setColor(CREW_COLOR)
-      .setFooter({ text: `${CREW_NAME} | Click the button below to apply!` })
-      .setTimestamp();
+      .setColor(CREW_COLOR);
 
-    const row = new ActionRowBuilder().addComponents(
+    const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('join_crew')
-        .setLabel('⚓ Join the Crew')
-        .setStyle(ButtonStyle.Success),
+        .setCustomId('apply_div1')
+        .setLabel('DIV 1')
+        .setEmoji('👑')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('apply_div2')
+        .setLabel('DIV 2')
+        .setEmoji('💜')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('apply_div3')
+        .setLabel('DIV 3')
+        .setEmoji('⚡')
+        .setStyle(ButtonStyle.Secondary),
     );
 
-    await interaction.channel.send({ embeds: [embed], components: [row] });
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('apply_div4')
+        .setLabel('DIV 4')
+        .setEmoji('🔥')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('apply_div5')
+        .setLabel('DIV 5')
+        .setEmoji('🌿')
+        .setStyle(ButtonStyle.Secondary),
+    );
+
+    await interaction.channel.send({ embeds: [embed], components: [row1, row2] });
     await interaction.editReply({ content: `✅ Join Crew embed posted!` });
   },
 };
